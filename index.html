@@ -53,34 +53,69 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        #hud {
+        #hudContainer {
             position: absolute;
             bottom: 10px;
-            left: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        #hud {
             color: #ffff00;
             background: rgba(0,0,0,0.7);
-            padding: 8px 12px;
+            padding: 4px 8px;
             border-radius: 4px;
             border: 1px solid #444;
-            font-size: 16px;
+            font-size: 11px;
             font-weight: bold;
-            z-index: 10;
             user-select: none;
+            height: 35px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+        }
+        
+        #scoreHud {
+            color: #ffff00;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-size: 10px;
+            font-weight: bold;
+            user-select: none;
+            text-align: center;
+            height: 35px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
         }
         
         #powerupHud {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
             color: #ffff00;
             background: rgba(0,0,0,0.7);
-            padding: 8px 12px;
+            padding: 4px 8px;
             border-radius: 4px;
             border: 1px solid #444;
-            font-size: 16px;
+            font-size: 11px;
             font-weight: bold;
-            z-index: 10;
             user-select: none;
+            height: 35px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
         }
         
         #gameContainer {
@@ -246,6 +281,12 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
         
+        #scoreHud #scoreDisplay {
+            font-size: 10px;
+            margin-bottom: 0;
+            text-shadow: none;
+        }
+        
         #victoryRestartButton {
             background: #cc132b;
             color: white;
@@ -302,11 +343,16 @@
         <div id="levelInfo">
             Level <span id="levelNumber">1</span>: <span id="levelName">Tutorial</span>
         </div>
-        <div id="hud">
-            <div id="motionDisplay">Fuel: <span id="motionCount">25</span></div>
-        </div>
-        <div id="powerupHud">
-            <div id="powerupDisplay">💊: <span id="powerupCount">0</span></div>
+        <div id="hudContainer">
+            <div id="hud">
+                <div id="motionDisplay">Fuel: <span id="motionCount">25</span></div>
+            </div>
+            <div id="powerupHud">
+                <div id="powerupDisplay">💊: <span id="powerupCount">0</span></div>
+            </div>
+            <div id="scoreHud">
+                <div id="scoreDisplay">Score: <span id="currentScore">0</span></div>
+            </div>
         </div>
         <canvas id="gameCanvas" width="450" height="800"></canvas>
         <div id="scoringInfo">
@@ -359,8 +405,7 @@
         function showLoadError(errorMessage) {
             // Hide the game elements and show error message
             document.getElementById('gameCanvas').style.display = 'none';
-            document.getElementById('hud').style.display = 'none';
-            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('hudContainer').style.display = 'none';
             document.getElementById('scoringInfo').style.display = 'none';
             document.getElementById('levelInfo').style.display = 'none';
             
@@ -544,6 +589,7 @@
             const remainingMoves = MAX_MOVES - motionCounter;
             document.getElementById('motionCount').textContent = remainingMoves;
             document.getElementById('powerupCount').textContent = powerupsCollected;
+            document.getElementById('currentScore').textContent = totalScore.toLocaleString();
         }
         
         function checkVictory() {
