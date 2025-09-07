@@ -13,6 +13,7 @@ fs.mkdirSync(DIST_DIR);
 const filesToCopy = [
     'index.html',
     'logo.svg', 
+    'levels.dat',
     'version.json',
     'server.js',
     'package.json',
