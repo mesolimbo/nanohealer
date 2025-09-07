@@ -1,0 +1,147 @@
+FROM mcr.microsoft.com/playwright:v1.55.0-jammy
+
+# Install Node.js MCP Playwright server
+WORKDIR /app
+
+# Copy package.json for the MCP server
+COPY <<EOF package.json
+{
+  "name": "playwright-mcp-server",
+  "version": "1.0.0",
+  "main": "cli.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "playwright": "^1.55.0"
+  }
+}
+EOF
+
+# Install dependencies
+RUN npm install
+
+# Copy the MCP server CLI
+COPY <<EOF cli.js
+#!/usr/bin/env node
+
+const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
+const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
+const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
+const { chromium } = require('playwright');
+
+const server = new Server(
+  {
+    name: 'playwright-mcp',
+    version: '1.0.0',
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+let browser = null;
+let context = null;
+let page = null;
+
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: 'browser_navigate',
+        description: 'Navigate browser to a URL',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'URL to navigate to'
+            }
+          },
+          required: ['url']
+        }
+      },
+      {
+        name: 'browser_install',
+        description: 'Install browser (no-op as browsers are pre-installed)',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      }
+    ]
+  };
+});
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+  
+  try {
+    if (name === 'browser_navigate') {
+      if (!browser) {
+        browser = await chromium.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-dev-shm-usage']
+        });
+        context = await browser.newContext();
+        page = await context.newPage();
+      }
+      
+      await page.goto(args.url);
+      const title = await page.title();
+      const content = await page.content();
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: \`Successfully navigated to: \${args.url}\\nPage title: \${title}\\nContent preview: \${content.substring(0, 500)}...\`
+          }
+        ]
+      };
+    } else if (name === 'browser_install') {
+      return { 
+        content: [{ type: 'text', text: 'Browsers are pre-installed' }] 
+      };
+    }
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: \`Error: \${error.message}\` }],
+      isError: true
+    };
+  }
+});
+
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  
+  process.on('SIGINT', async () => {
+    if (browser) {
+      await browser.close();
+    }
+    process.exit(0);
+  });
+}
+
+main().catch(console.error);
+EOF
+
+# Make CLI executable
+RUN chmod +x cli.js
+
+# Set up virtual display for headless Chrome
+RUN apt-get update && apt-get install -y xvfb
+
+# Create entrypoint script
+COPY <<EOF entrypoint.sh
+#!/bin/bash
+# Start virtual display
+Xvfb :99 -ac -screen 0 1280x1024x24 &
+export DISPLAY=:99
+exec node cli.js
+EOF
+
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]

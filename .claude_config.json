@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "docker",
+      "args": ["exec", "-i", "nanohealer-playwright-mcp-1", "node", "cli.js"],
+      "env": {}
+    }
+  }
+}

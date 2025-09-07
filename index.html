@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanohealer 🚑</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚑</text></svg>">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #880000;
+            font-family: Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        #gameContainer {
+            width: 50vh;
+            height: 90vh;
+            max-width: 450px;
+            max-height: 800px;
+            background: linear-gradient(to bottom, #5e0303, #020000);
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #444;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        #hud {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #00ff00;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10;
+            user-select: none;
+        }
+        
+        #powerupHud {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #ffff00;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10;
+            user-select: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+        }
+        
+        #logo {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            user-select: none;
+            pointer-events: none;
+        }
+        
+        #gameTitle {
+            width: 320px;
+            height: auto;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            display: block;
+        }
+        
+        #gameOverOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 4px;
+            user-select: none;
+        }
+        
+        #gameOverTitle {
+            font-size: 48px;
+            color: #ff4444;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+        }
+        
+        #gameOverMessage {
+            font-size: 24px;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        #restartButton {
+            background: #00aa00;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: background 0.3s;
+        }
+        
+        #restartButton:hover {
+            background: #00cc00;
+        }
+        
+        #victoryOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 4px;
+            user-select: none;
+        }
+        
+        #victoryTitle {
+            font-size: 48px;
+            color: #00ff00;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+        }
+        
+        #victoryMessage {
+            font-size: 24px;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        #scoreDisplay {
+            font-size: 28px;
+            color: #ffff00;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        #victoryRestartButton {
+            background: #0066ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: background 0.3s;
+        }
+        
+        #victoryRestartButton:hover {
+            background: #0088ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="logo">
+            <img id="gameTitle" src="/logo.svg" alt="NANOHEALER">
+        </div>
+        <div id="hud">
+            <div id="motionDisplay">Energy: <span id="motionCount">25</span></div>
+        </div>
+        <div id="powerupHud">
+            <div id="powerupDisplay">💊: <span id="powerupCount">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="450" height="800"></canvas>
+        <div id="gameOverOverlay">
+            <div id="gameOverTitle">GAME OVER</div>
+            <div id="gameOverMessage">You ran out of energy!</div>
+            <button id="restartButton">RESTART GAME</button>
+        </div>
+        <div id="victoryOverlay">
+            <div id="victoryTitle">VICTORY!</div>
+            <div id="victoryMessage">All patients healed!</div>
+            <div id="scoreDisplay">Score: <span id="finalScore">0</span></div>
+            <button id="victoryRestartButton">PLAY AGAIN</button>
+        </div>
+    </div>
+    
+    <script>
+        const ORIGINAL_LEVEL = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 0, 0, 1, 2, 1, 0, 0, 0, 0,
+            0, 0, 0, 1, 3, 1, 0, 0, 0, 0,
+            0, 0, 0, 1, 2, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 4, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+
+        const SAMPLE_LEVEL = {
+            grid: [...ORIGINAL_LEVEL]
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const TILE_WIDTH = 44;
+        const TILE_HEIGHT = 22;
+        const GRID_SIZE = 10;
+        
+        const COLORS = {
+            0: '#DDBB99', // flesh color for empty tiles
+            1: '#CC9988',
+            2: '#bb7f77',
+            3: '#cc352b'
+        };
+        
+        const player = {
+            x: 0,
+            y: 0
+        };
+        
+        const MAX_MOVES = 25;
+        let motionCounter = 0;
+        let gameOver = false;
+        let gameWon = false;
+        let powerupsCollected = 0;
+        
+        function drawIsometricTile(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#996644';
+            ctx.lineWidth = 1;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + TILE_WIDTH / 2, y + TILE_HEIGHT / 2);
+            ctx.lineTo(x, y + TILE_HEIGHT);
+            ctx.lineTo(x - TILE_WIDTH / 2, y + TILE_HEIGHT / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+        
+        function drawLeftSideTile(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#755234';
+            ctx.lineWidth = 1;
+            
+            // Left side face (vertical rectangle in isometric view)
+            ctx.beginPath();
+            ctx.moveTo(x - TILE_WIDTH / 2, y + TILE_HEIGHT / 2);
+            ctx.lineTo(x - TILE_WIDTH / 2, y + TILE_HEIGHT / 2 + TILE_HEIGHT);
+            ctx.lineTo(x, y + TILE_HEIGHT + TILE_HEIGHT);
+            ctx.lineTo(x, y + TILE_HEIGHT);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+        
+        function drawRightSideTile(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#996644';
+            ctx.lineWidth = 1;
+            
+            // Right side face (vertical rectangle in isometric view)
+            ctx.beginPath();
+            ctx.moveTo(x + TILE_WIDTH / 2, y + TILE_HEIGHT / 2);
+            ctx.lineTo(x + TILE_WIDTH / 2, y + TILE_HEIGHT / 2 + TILE_HEIGHT);
+            ctx.lineTo(x, y + TILE_HEIGHT + TILE_HEIGHT);
+            ctx.lineTo(x, y + TILE_HEIGHT);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+        
+        function drawEmojiShadow(gridX, gridY, shadowColor = '#996644', shadowWidth = 10, shadowHeight = 4) {
+            const gridWidth = GRID_SIZE * TILE_WIDTH;
+            const gridHeight = GRID_SIZE * TILE_HEIGHT;
+            const offsetX = canvas.width / 2;
+            const offsetY = (canvas.height - gridHeight) / 2 + gridHeight / 4 - (TILE_HEIGHT * 3);
+            
+            const isoPos = gridToIso(gridX, gridY);
+            const centerX = offsetX + isoPos.x;
+            const centerY = offsetY + isoPos.y + TILE_HEIGHT - 2;
+            
+            ctx.save();
+            ctx.fillStyle = shadowColor;
+            ctx.scale(1, 0.5);
+            
+            // Create a unified radial gradient shadow
+            const gradient = ctx.createRadialGradient(centerX, centerY * 2, 0, centerX, centerY * 2, shadowWidth * 2);
+            gradient.addColorStop(0, shadowColor);
+            gradient.addColorStop(0.3, shadowColor + '88');
+            gradient.addColorStop(0.7, shadowColor + '33');
+            gradient.addColorStop(1, shadowColor + '00');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY * 2, shadowWidth * 1.8, shadowHeight * 1.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        function gridToIso(gridX, gridY) {
+            const isoX = (gridX - gridY) * TILE_WIDTH / 2;
+            const isoY = (gridX + gridY) * TILE_HEIGHT / 2;
+            return { x: isoX, y: isoY };
+        }
+        
+        function healTile(x, y) {
+            const gridIndex = y * GRID_SIZE + x;
+            const currentTile = SAMPLE_LEVEL.grid[gridIndex];
+            
+            if (currentTile === 4) {
+                SAMPLE_LEVEL.grid[gridIndex] = 0;
+                motionCounter = Math.max(0, motionCounter - 10);
+                powerupsCollected++;
+                return true;
+            } else if (currentTile > 0 && currentTile < 4) {
+                SAMPLE_LEVEL.grid[gridIndex] = currentTile - 1;
+                return true;
+            }
+            return false;
+        }
+        
+        function updateHUD() {
+            const remainingMoves = MAX_MOVES - motionCounter;
+            document.getElementById('motionCount').textContent = remainingMoves;
+            document.getElementById('powerupCount').textContent = powerupsCollected;
+        }
+        
+        function checkVictory() {
+            for (let i = 0; i < SAMPLE_LEVEL.grid.length; i++) {
+                const tile = SAMPLE_LEVEL.grid[i];
+                if (tile > 0 && tile !== 4) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        function showGameOverMessage() {
+            document.getElementById('gameOverOverlay').style.display = 'flex';
+        }
+        
+        function showVictoryMessage() {
+            const remainingMoves = MAX_MOVES - motionCounter;
+            const powerupBonus = powerupsCollected * 100;
+            const score = (remainingMoves * 100) + powerupBonus;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('victoryOverlay').style.display = 'flex';
+        }
+        
+        function resetGame() {
+            motionCounter = 0;
+            gameOver = false;
+            gameWon = false;
+            powerupsCollected = 0;
+            player.x = 0;
+            player.y = 0;
+            
+            SAMPLE_LEVEL.grid = [...ORIGINAL_LEVEL];
+            
+            document.getElementById('gameOverOverlay').style.display = 'none';
+            document.getElementById('victoryOverlay').style.display = 'none';
+            updateHUD();
+            render();
+        }
+        
+        function movePlayer(dx, dy) {
+            if (gameOver || gameWon) return;
+            
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+            
+            if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
+                console.log("Moving to:", newX, newY);
+                player.x = newX;
+                player.y = newY;
+                motionCounter++;
+                console.log("Tile before heal:", SAMPLE_LEVEL.grid[player.y * GRID_SIZE + player.x]);
+                healTile(player.x, player.y);
+                console.log("Tile after heal:", SAMPLE_LEVEL.grid[player.y * GRID_SIZE + player.x]);
+                
+                if (checkVictory()) {
+                    gameWon = true;
+                    showVictoryMessage();
+                } else if (motionCounter >= MAX_MOVES) {
+                    gameOver = true;
+                    showGameOverMessage();
+                }
+                
+                updateHUD();
+                render();
+            }
+        }
+        
+        function drawAllEmojiShadows() {
+            console.log("Drawing shadows - Player at grid:", player.x, player.y);
+            
+            // Draw shadow for ambulance
+            drawEmojiShadow(player.x, player.y, '#996644', 10, 4);
+            
+            // Find and draw shadow for powerup pill
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    const gridIndex = row * GRID_SIZE + col;
+                    const tileType = SAMPLE_LEVEL.grid[gridIndex];
+                    if (tileType === 4) {
+                        drawEmojiShadow(col, row, '#996644', 8, 3);
+                    }
+                }
+            }
+        }
+        
+        function drawPlayer() {
+            const gridWidth = GRID_SIZE * TILE_WIDTH;
+            const gridHeight = GRID_SIZE * TILE_HEIGHT;
+            
+            const offsetX = canvas.width / 2;
+            const offsetY = (canvas.height - gridHeight) / 2 + gridHeight / 4 - (TILE_HEIGHT * 3);
+            
+            const isoPos = gridToIso(player.x, player.y);
+            const screenX = offsetX + isoPos.x;
+            const screenY = offsetY + isoPos.y + TILE_HEIGHT / 2;
+            
+            ctx.save();
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText('🚑', screenX, screenY);
+            ctx.restore();
+        }
+        
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const gridWidth = GRID_SIZE * TILE_WIDTH;
+            const gridHeight = GRID_SIZE * TILE_HEIGHT;
+            
+            const offsetX = canvas.width / 2;
+            const offsetY = (canvas.height - gridHeight) / 2 + gridHeight / 4 - (TILE_HEIGHT * 3);
+            
+            // Draw 3D base tiles first (underneath main board)
+            draw3DBaseTiles(offsetX, offsetY);
+            
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    const gridIndex = row * GRID_SIZE + col;
+                    const tileType = SAMPLE_LEVEL.grid[gridIndex];
+                    const color = COLORS[tileType] || COLORS[0];
+                    
+                    const isoPos = gridToIso(col, row);
+                    const screenX = offsetX + isoPos.x;
+                    const screenY = offsetY + isoPos.y;
+                    
+                    drawIsometricTile(screenX, screenY, color);
+                    
+                    if (tileType === 4) {
+                        // Just draw pill emoji (shadow will be drawn later)
+                        ctx.save();
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText('💊', screenX, screenY + TILE_HEIGHT / 2);
+                        ctx.restore();
+                    }
+                }
+            }
+            
+            // Draw shadows for all emojis (before drawing the emojis themselves)
+            drawAllEmojiShadows();
+            drawPlayer();
+        }
+        
+        function draw3DBaseTiles(offsetX, offsetY) {
+            // Consistent colors - same across all rows
+            const leftSideColor = '#8c6f4a';   // Dark consistent color for left side
+            const rightSideColor = '#eddbcb';  // Light consistent color for right side
+            
+            // Draw 3 rows of tiles on each side
+            for (let row = 0; row < 3; row++) {
+                // Left side tiles
+                for (let i = 0; i < 10; i++) {
+                    const isoPos = gridToIso(i, 9);  // Bottom edge of main board
+                    const screenX = offsetX + isoPos.x;
+                    const screenY = offsetY + isoPos.y + (row * TILE_HEIGHT);
+                    drawLeftSideTile(screenX, screenY, leftSideColor);
+                }
+                
+                // Right side tiles
+                for (let i = 0; i < 10; i++) {
+                    const isoPos = gridToIso(9, i);  // Right edge of main board
+                    const screenX = offsetX + isoPos.x;
+                    const screenY = offsetY + isoPos.y + (row * TILE_HEIGHT);
+                    drawRightSideTile(screenX, screenY, rightSideColor);
+                }
+            }
+        }
+        
+        document.addEventListener('keydown', (event) => {
+            switch(event.key.toLowerCase()) {
+                case 'a':
+                case 'arrowleft':
+                    movePlayer(-1, 0);
+                    break;
+                case 's':
+                case 'arrowdown':
+                    movePlayer(0, 1);
+                    break;
+                case 'd':
+                case 'arrowright':
+                    movePlayer(1, 0);
+                    break;
+                case 'f':
+                case 'arrowup':
+                    movePlayer(0, -1);
+                    break;
+                case 'r':
+                case 'enter':
+                    if (gameOver || gameWon) {
+                        resetGame();
+                    }
+                    break;
+            }
+        });
+        
+        document.getElementById('restartButton').addEventListener('click', () => {
+            resetGame();
+        });
+        
+        document.getElementById('victoryRestartButton').addEventListener('click', () => {
+            resetGame();
+        });
+        
+        // Initialize game - heal starting tile and update HUD
+        console.log("Game starting - Player at:", player.x, player.y);
+        console.log("Starting tile type:", SAMPLE_LEVEL.grid[player.y * GRID_SIZE + player.x]);
+        healTile(player.x, player.y);
+        console.log("After healing - Tile type:", SAMPLE_LEVEL.grid[player.y * GRID_SIZE + player.x]);
+        updateHUD();
+        render();
+    </script>
+</body>
+</html>

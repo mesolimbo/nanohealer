@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nanohealer:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./logo.svg:/usr/share/nginx/html/logo.svg:ro
+
+  playwright-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    network_mode: host
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=:99
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
