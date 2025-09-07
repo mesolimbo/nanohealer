@@ -332,6 +332,7 @@
         let levelsData = null;
         let currentLevel = 0;
         let currentLevelData = null;
+        let totalScore = 0;
         
         // Load levels data
         async function loadLevels() {
@@ -562,8 +563,9 @@
         function showVictoryMessage() {
             const remainingMoves = MAX_MOVES - motionCounter;
             const powerupBonus = powerupsCollected * 100;
-            const score = (remainingMoves * 100) + powerupBonus;
-            document.getElementById('finalScore').textContent = score.toLocaleString();
+            const levelScore = (remainingMoves * 100) + powerupBonus;
+            totalScore += levelScore;
+            document.getElementById('finalScore').textContent = totalScore.toLocaleString();
             
             console.log('Victory! Current level:', currentLevel, 'Total levels:', levelsData.levels.length);
             
@@ -598,6 +600,7 @@
             gameOver = false;
             gameWon = false;
             powerupsCollected = 0;
+            totalScore = 0;  // Reset total score
             player.x = 0;
             player.y = 0;
             
@@ -784,7 +787,7 @@
                 case 'arrowright':
                     movePlayer(1, 0);
                     break;
-                case 'f':
+                case 'w':
                 case 'arrowup':
                     movePlayer(0, -1);
                     break;
