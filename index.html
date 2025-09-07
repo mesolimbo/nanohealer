@@ -200,7 +200,7 @@
             <img id="gameTitle" src="/logo.svg" alt="NANOHEALER">
         </div>
         <div id="hud">
-            <div id="motionDisplay">Energy: <span id="motionCount">25</span></div>
+            <div id="motionDisplay">Strength: <span id="motionCount">25</span></div>
         </div>
         <div id="powerupHud">
             <div id="powerupDisplay">💊: <span id="powerupCount">0</span></div>
@@ -208,7 +208,7 @@
         <canvas id="gameCanvas" width="450" height="800"></canvas>
         <div id="gameOverOverlay">
             <div id="gameOverTitle">GAME OVER</div>
-            <div id="gameOverMessage">You ran out of energy!</div>
+            <div id="gameOverMessage">You ran out of strength!</div>
             <button id="restartButton">RESTART GAME</button>
         </div>
         <div id="victoryOverlay">
@@ -561,6 +561,74 @@
                         resetGame();
                     }
                     break;
+            }
+        });
+        
+        // Touch/drag controls for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isDragging = false;
+        const minDragDistance = 30;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            isDragging = true;
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!isDragging) return;
+            
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            
+            // Only move if drag distance is significant
+            if (Math.abs(deltaX) < minDragDistance && Math.abs(deltaY) < minDragDistance) {
+                return;
+            }
+            
+            // Determine direction matching isometric grid (45° rotated)
+            const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+            
+            // Isometric directions aligned with visual grid:
+            // Right: 45° (down-right on screen)
+            // Down: 135° (down-left on screen)  
+            // Left: -135° or 225° (up-left on screen)
+            // Up: -45° or 315° (up-right on screen)
+            
+            if ((angle >= 22.5 && angle <= 67.5)) {
+                // Touch down-right → isometric right
+                movePlayer(1, 0);
+            } else if ((angle >= 112.5 && angle <= 157.5)) {
+                // Touch down-left → isometric down
+                movePlayer(0, 1);
+            } else if ((angle >= -157.5 && angle <= -112.5)) {
+                // Touch up-left → isometric left
+                movePlayer(-1, 0);
+            } else if ((angle >= -67.5 && angle <= -22.5)) {
+                // Touch up-right → isometric up
+                movePlayer(0, -1);
+            } else if (angle >= -22.5 && angle <= 22.5) {
+                // Pure horizontal right → closest isometric (right)
+                movePlayer(1, 0);
+            } else if (angle >= 67.5 && angle <= 112.5) {
+                // Pure vertical down → closest isometric (down)
+                movePlayer(0, 1);
+            } else if (angle >= 157.5 || angle <= -157.5) {
+                // Pure horizontal left → closest isometric (left)
+                movePlayer(-1, 0);
+            } else if (angle >= -112.5 && angle <= -67.5) {
+                // Pure vertical up → closest isometric (up)
+                movePlayer(0, -1);
             }
         });
         

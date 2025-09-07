@@ -41,27 +41,4 @@ const distPkg = {
 
 fs.writeFileSync(path.join(DIST_DIR, 'package.json'), JSON.stringify(distPkg, null, 2));
 console.log('✓ Created production package.json');
-
-// Create deployment README
-const readme = `# Nanohealer Deployment Package
-
-## Installation
-1. Upload all files to your NFS site
-2. Run: npm install
-3. Run: npm start
-
-## Files included:
-- index.html (game)
-- logo.svg (logo)
-- version.json (version data)  
-- server.js (Node.js server)
-- package.json (dependencies)
-
-## Verification:
-Visit /version to confirm Node.js is running
-`;
-
-fs.writeFileSync(path.join(DIST_DIR, 'README.md'), readme);
-console.log('✓ Created deployment README');
-
-console.log(`\n🎯 Build complete! Upload the contents of '${DIST_DIR}' to NFS.`);
+console.log(`\n🎯 Build complete! Upload the contents of '${DIST_DIR}' to dest.`);
