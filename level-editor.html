@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanohealer Level Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #880000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 80vh;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #f8f8f8;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .editor-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* File Operations */
+        .file-ops {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 6px;
+        }
+        
+        .file-ops h3 {
+            margin-top: 0;
+            color: #2c5f8c;
+        }
+        
+        .file-ops button, .file-ops input[type="file"] {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        
+        /* Tile Types Management */
+        .tile-types {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f0f8f0;
+            border-radius: 6px;
+        }
+        
+        .tile-types h3 {
+            margin-top: 0;
+            color: #2c5f2c;
+        }
+        
+        .tile-type-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .tile-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #333;
+        }
+        
+        .tile-info {
+            flex: 1;
+        }
+        
+        .tile-info input {
+            width: 100%;
+            margin: 2px 0;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+        }
+        
+        /* Level List */
+        .level-list {
+            margin-bottom: 30px;
+        }
+        
+        .level-list h3 {
+            color: #5f2c5f;
+        }
+        
+        .level-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        
+        .level-item.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .level-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .level-info {
+            flex: 1;
+        }
+        
+        .level-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .level-controls button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        /* Grid Editor */
+        .grid-editor {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .grid-container {
+            flex: 1;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 1px;
+            background: #ccc;
+            padding: 10px;
+            border-radius: 6px;
+            width: fit-content;
+        }
+        
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #666;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .grid-cell:hover {
+            opacity: 0.8;
+        }
+        
+        .grid-cell::after {
+            content: attr(data-value);
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 10px;
+            font-weight: bold;
+            color: rgba(0,0,0,0.7);
+        }
+        
+        /* Level Properties */
+        .level-properties {
+            width: 250px;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 6px;
+        }
+        
+        .level-properties h4 {
+            margin-top: 0;
+            color: #5f5f2c;
+        }
+        
+        .level-properties label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .level-properties input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-top: 3px;
+        }
+        
+        /* Tool Palette */
+        .tool-palette {
+            margin-bottom: 20px;
+        }
+        
+        .tool-palette h4 {
+            margin-bottom: 10px;
+        }
+        
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        
+        .palette-tile {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .palette-tile.active {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+        
+        .palette-tile::after {
+            content: attr(data-id);
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 10px;
+            font-weight: bold;
+            color: rgba(0,0,0,0.7);
+        }
+        
+        .status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #28a745;
+            color: white;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚑 Nanohealer Level Editor</h1>
+            <p>Create and edit levels and tile types for your game</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <!-- File Operations -->
+                <div class="file-ops">
+                    <h3>File Operations</h3>
+                    <input type="file" id="fileInput" accept=".dat,.json" class="btn-primary">
+                    <button id="loadBtn" class="btn-primary">Load File</button>
+                    <button id="saveBtn" class="btn-success">Save File</button>
+                    <button id="newBtn" class="btn-warning">New Project</button>
+                </div>
+                
+                <!-- Tile Types Management -->
+                <div class="tile-types">
+                    <h3>Tile Types</h3>
+                    <div id="tileTypesList"></div>
+                    <button id="addTileTypeBtn" class="btn-primary">Add Tile Type</button>
+                </div>
+                
+                <!-- Level List -->
+                <div class="level-list">
+                    <h3>Levels</h3>
+                    <div id="levelsList"></div>
+                    <button id="addLevelBtn" class="btn-primary">Add Level</button>
+                </div>
+            </div>
+            
+            <div class="editor-area">
+                <div id="noLevelSelected" class="hidden">
+                    <h2>No Level Selected</h2>
+                    <p>Select a level from the sidebar to start editing, or create a new level.</p>
+                </div>
+                
+                <div id="levelEditor" class="hidden">
+                    <div class="grid-editor">
+                        <div class="grid-container">
+                            <h3 id="currentLevelTitle">Level Editor</h3>
+                            <div class="grid" id="gameGrid"></div>
+                        </div>
+                        
+                        <div class="level-properties">
+                            <h4>Level Properties</h4>
+                            <label>
+                                Name:
+                                <input type="text" id="levelName" placeholder="Level name">
+                            </label>
+                            <label>
+                                Fuel Limit:
+                                <input type="number" id="fuelLimit" min="1" placeholder="25">
+                            </label>
+                            
+                            <div class="tool-palette">
+                                <h4>Tile Palette</h4>
+                                <div class="palette-grid" id="tilePalette"></div>
+                            </div>
+                            
+                            <button id="clearGridBtn" class="btn-warning">Clear Grid</button>
+                            <button id="deleteLevelBtn" class="btn-danger">Delete Level</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <script>
+        let gameData = {
+            tileTypes: {
+                0: { name: "Healthy", color: "#DDBB99", description: "Healthy tissue" },
+                1: { name: "Minor Damage", color: "#CC9988", description: "Minor tissue damage" },
+                2: { name: "Moderate Damage", color: "#bb7f77", description: "Moderate tissue damage" },
+                3: { name: "Severe Damage", color: "#cc352b", description: "Severe tissue damage" },
+                4: { name: "Medicine Pill", color: "#4CAF50", description: "Fuel restoration pill" }
+            },
+            levels: []
+        };
+        
+        let currentLevel = null;
+        let currentLevelIndex = -1;
+        let selectedTileType = 0;
+        
+        // Initialize the editor
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            updateTileTypesList();
+            updateLevelsList();
+            updatePalette();
+            showNoLevelMessage();
+        });
+        
+        function setupEventListeners() {
+            document.getElementById('fileInput').addEventListener('change', loadFile);
+            document.getElementById('loadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('saveBtn').addEventListener('click', saveFile);
+            document.getElementById('newBtn').addEventListener('click', newProject);
+            document.getElementById('addTileTypeBtn').addEventListener('click', addTileType);
+            document.getElementById('addLevelBtn').addEventListener('click', addLevel);
+            document.getElementById('levelName').addEventListener('input', updateLevelName);
+            document.getElementById('fuelLimit').addEventListener('input', updateFuelLimit);
+            document.getElementById('clearGridBtn').addEventListener('click', clearGrid);
+            document.getElementById('deleteLevelBtn').addEventListener('click', deleteCurrentLevel);
+        }
+        
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Handle both old format (levels only) and new format (with tile types)
+                    if (data.levels) {
+                        gameData.levels = data.levels;
+                        if (data.tileTypes) {
+                            gameData.tileTypes = data.tileTypes;
+                        }
+                    } else if (Array.isArray(data)) {
+                        // Old format - just levels array
+                        gameData.levels = data;
+                    }
+                    
+                    updateTileTypesList();
+                    updateLevelsList();
+                    updatePalette();
+                    showStatus('File loaded successfully!', 'success');
+                    showNoLevelMessage();
+                } catch (error) {
+                    showStatus('Error loading file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function saveFile() {
+            // Create a custom JSON formatter that preserves 10x10 grid formatting
+            const formatLevel = (level) => {
+                const formattedGrid = [];
+                for (let row = 0; row < 10; row++) {
+                    const rowData = level.grid.slice(row * 10, (row + 1) * 10);
+                    formattedGrid.push(rowData.join(', '));
+                }
+                
+                return `    {
+      "name": "${level.name}",
+      "fuelLimit": ${level.fuelLimit},
+      "grid": [
+        ${formattedGrid.join(',\n        ')}
+      ]
+    }`;
+            };
+            
+            const tileTypesStr = JSON.stringify(gameData.tileTypes, null, 2)
+                .split('\n')
+                .map(line => '  ' + line)
+                .join('\n');
+            
+            const levelsStr = gameData.levels.map(formatLevel).join(',\n');
+            
+            const dataStr = `{
+  "tileTypes": ${tileTypesStr.substring(2)},
+  "levels": [
+${levelsStr}
+  ]
+}`;
+            
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'levels.dat';
+            link.click();
+            
+            showStatus('File saved successfully!', 'success');
+        }
+        
+        function newProject() {
+            if (confirm('Create a new project? This will clear all current data.')) {
+                gameData = {
+                    tileTypes: {
+                        0: { name: "Healthy", color: "#DDBB99", description: "Healthy tissue" },
+                        1: { name: "Minor Damage", color: "#CC9988", description: "Minor tissue damage" },
+                        2: { name: "Moderate Damage", color: "#bb7f77", description: "Moderate tissue damage" },
+                        3: { name: "Severe Damage", color: "#cc352b", description: "Severe tissue damage" },
+                        4: { name: "Medicine Pill", color: "#4CAF50", description: "Fuel restoration pill" }
+                    },
+                    levels: []
+                };
+                currentLevel = null;
+                currentLevelIndex = -1;
+                updateTileTypesList();
+                updateLevelsList();
+                updatePalette();
+                showNoLevelMessage();
+                showStatus('New project created!', 'success');
+            }
+        }
+        
+        function updateTileTypesList() {
+            const container = document.getElementById('tileTypesList');
+            container.innerHTML = '';
+            
+            Object.entries(gameData.tileTypes).forEach(([id, tileType]) => {
+                const item = document.createElement('div');
+                item.className = 'tile-type-item';
+                item.innerHTML = `
+                    <div class="tile-preview" style="background-color: ${tileType.color}"></div>
+                    <div class="tile-info">
+                        <input type="text" value="${tileType.name}" onchange="updateTileTypeName(${id}, this.value)" placeholder="Name">
+                        <input type="color" value="${tileType.color}" onchange="updateTileTypeColor(${id}, this.value)">
+                        <input type="text" value="${tileType.description}" onchange="updateTileTypeDescription(${id}, this.value)" placeholder="Description">
+                    </div>
+                    <button class="btn-danger" onclick="deleteTileType(${id})">×</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function updateTileTypeName(id, name) {
+            gameData.tileTypes[id].name = name;
+            updatePalette();
+        }
+        
+        function updateTileTypeColor(id, color) {
+            gameData.tileTypes[id].color = color;
+            updateTileTypesList();
+            updatePalette();
+            if (currentLevel) updateGrid();
+        }
+        
+        function updateTileTypeDescription(id, description) {
+            gameData.tileTypes[id].description = description;
+        }
+        
+        function deleteTileType(id) {
+            if (Object.keys(gameData.tileTypes).length <= 1) {
+                showStatus('Cannot delete the last tile type!', 'error');
+                return;
+            }
+            
+            if (confirm('Delete this tile type? This will affect all levels using it.')) {
+                delete gameData.tileTypes[id];
+                updateTileTypesList();
+                updatePalette();
+                if (currentLevel) updateGrid();
+            }
+        }
+        
+        function addTileType() {
+            const newId = Math.max(...Object.keys(gameData.tileTypes).map(Number)) + 1;
+            gameData.tileTypes[newId] = {
+                name: `Tile ${newId}`,
+                color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`,
+                description: `New tile type ${newId}`
+            };
+            updateTileTypesList();
+            updatePalette();
+        }
+        
+        function updateLevelsList() {
+            const container = document.getElementById('levelsList');
+            container.innerHTML = '';
+            
+            gameData.levels.forEach((level, index) => {
+                const item = document.createElement('div');
+                item.className = 'level-item';
+                if (index === currentLevelIndex) item.classList.add('active');
+                
+                item.innerHTML = `
+                    <div class="level-info">
+                        <strong>${level.name}</strong><br>
+                        <small>Fuel: ${level.fuelLimit}</small>
+                    </div>
+                    <div class="level-controls">
+                        <button class="btn-primary" onclick="editLevel(${index})">Edit</button>
+                        <button class="btn-warning" onclick="moveLevel(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button class="btn-warning" onclick="moveLevel(${index}, 1)" ${index === gameData.levels.length - 1 ? 'disabled' : ''}>↓</button>
+                        <button class="btn-danger" onclick="deleteLevel(${index})">×</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function addLevel() {
+            const newLevel = {
+                name: `Level ${gameData.levels.length + 1}`,
+                fuelLimit: 25,
+                grid: new Array(100).fill(0)
+            };
+            gameData.levels.push(newLevel);
+            updateLevelsList();
+            editLevel(gameData.levels.length - 1);
+        }
+        
+        function editLevel(index) {
+            currentLevelIndex = index;
+            currentLevel = gameData.levels[index];
+            
+            document.getElementById('levelName').value = currentLevel.name;
+            document.getElementById('fuelLimit').value = currentLevel.fuelLimit;
+            document.getElementById('currentLevelTitle').textContent = `Editing: ${currentLevel.name}`;
+            
+            updateGrid();
+            showLevelEditor();
+            updateLevelsList();
+        }
+        
+        function moveLevel(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= gameData.levels.length) return;
+            
+            [gameData.levels[index], gameData.levels[newIndex]] = [gameData.levels[newIndex], gameData.levels[index]];
+            
+            if (currentLevelIndex === index) currentLevelIndex = newIndex;
+            else if (currentLevelIndex === newIndex) currentLevelIndex = index;
+            
+            updateLevelsList();
+        }
+        
+        function deleteLevel(index) {
+            if (confirm('Delete this level?')) {
+                gameData.levels.splice(index, 1);
+                if (currentLevelIndex === index) {
+                    currentLevel = null;
+                    currentLevelIndex = -1;
+                    showNoLevelMessage();
+                } else if (currentLevelIndex > index) {
+                    currentLevelIndex--;
+                }
+                updateLevelsList();
+            }
+        }
+        
+        function deleteCurrentLevel() {
+            if (currentLevelIndex >= 0) {
+                deleteLevel(currentLevelIndex);
+            }
+        }
+        
+        function updateLevelName() {
+            if (currentLevel) {
+                currentLevel.name = document.getElementById('levelName').value;
+                document.getElementById('currentLevelTitle').textContent = `Editing: ${currentLevel.name}`;
+                updateLevelsList();
+            }
+        }
+        
+        function updateFuelLimit() {
+            if (currentLevel) {
+                currentLevel.fuelLimit = parseInt(document.getElementById('fuelLimit').value) || 25;
+                updateLevelsList();
+            }
+        }
+        
+        function updatePalette() {
+            const container = document.getElementById('tilePalette');
+            container.innerHTML = '';
+            
+            Object.entries(gameData.tileTypes).forEach(([id, tileType]) => {
+                const tile = document.createElement('div');
+                tile.className = 'palette-tile';
+                tile.style.backgroundColor = tileType.color;
+                tile.setAttribute('data-id', id);
+                tile.title = `${tileType.name}: ${tileType.description}`;
+                
+                if (parseInt(id) === selectedTileType) {
+                    tile.classList.add('active');
+                }
+                
+                tile.addEventListener('click', () => {
+                    selectedTileType = parseInt(id);
+                    updatePalette();
+                });
+                
+                container.appendChild(tile);
+            });
+        }
+        
+        function updateGrid() {
+            const container = document.getElementById('gameGrid');
+            container.innerHTML = '';
+            
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 10; col++) {
+                    const index = row * 10 + col;
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    
+                    const tileId = currentLevel.grid[index];
+                    const tileType = gameData.tileTypes[tileId];
+                    
+                    if (tileType) {
+                        cell.style.backgroundColor = tileType.color;
+                        cell.setAttribute('data-value', tileId);
+                        cell.title = `${tileType.name} (${tileId})`;
+                    } else {
+                        cell.style.backgroundColor = '#999';
+                        cell.setAttribute('data-value', tileId);
+                        cell.title = `Unknown tile type: ${tileId}`;
+                    }
+                    
+                    cell.addEventListener('click', () => paintCell(index));
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        function paintCell(index) {
+            if (currentLevel) {
+                currentLevel.grid[index] = selectedTileType;
+                updateGrid();
+            }
+        }
+        
+        function clearGrid() {
+            if (currentLevel && confirm('Clear the entire grid?')) {
+                currentLevel.grid.fill(0);
+                updateGrid();
+            }
+        }
+        
+        function showLevelEditor() {
+            document.getElementById('noLevelSelected').classList.add('hidden');
+            document.getElementById('levelEditor').classList.remove('hidden');
+        }
+        
+        function showNoLevelMessage() {
+            document.getElementById('levelEditor').classList.add('hidden');
+            document.getElementById('noLevelSelected').classList.remove('hidden');
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status';
+            if (type === 'error') status.style.backgroundColor = '#dc3545';
+            else status.style.backgroundColor = '#28a745';
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
